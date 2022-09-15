@@ -5,9 +5,6 @@ import (
 	"reflect"
 )
 
-// Func is used for masking a value.
-type Func func(ptr reflect.Value) error
-
 // Apply applies masking based on struct tagging.
 func Apply(v interface{}) error {
 	ptr := reflect.ValueOf(v)
