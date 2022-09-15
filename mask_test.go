@@ -7,34 +7,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_MaskSimple_WithNoChar_ReturnsCorrectResult(t *testing.T) {
-	// arrange
-	type AccountInfo struct {
-		Name          string
-		AccountNumber string `mask:"simple"`
-	}
-	accountInfo := AccountInfo{
-		Name:          "Test Account",
-		AccountNumber: "12345678",
-	}
-	expectedMask := AccountInfo{
-		Name:          "Test Account",
-		AccountNumber: "XXXXXXXX",
-	}
-
-	// act
-	maskedAccountInfo := accountInfo
-	mask.Apply(&maskedAccountInfo)
-
-	// assert
-	assert.Equal(t, expectedMask, maskedAccountInfo)
-}
-
-func Test_MaskSimple_WithCharArgument_ReturnsCorrectResult(t *testing.T) {
+func Test_MaskSimple_ReturnsCorrectResult(t *testing.T) {
 	// arrange
 	type UserPass struct {
 		Username string
-		Password string `mask:"simple,*"`
+		Password string `mask:"*"`
 	}
 	up := UserPass{
 		Username: "John Smith",
@@ -52,11 +29,34 @@ func Test_MaskSimple_WithCharArgument_ReturnsCorrectResult(t *testing.T) {
 	assert.Equal(t, expectedMask, up)
 }
 
+func Test_MaskSimple_WithShowFront_ReturnsCorrectResult(t *testing.T) {
+	// arrange
+	type AccountInfo struct {
+		Name          string
+		AccountNumber string `mask:"X,showfront=4"`
+	}
+	accountInfo := AccountInfo{
+		Name:          "Test Account",
+		AccountNumber: "123456789",
+	}
+	expectedMask := AccountInfo{
+		Name:          "Test Account",
+		AccountNumber: "1234XXXXX",
+	}
+
+	// act
+	maskedAccountInfo := accountInfo
+	mask.Apply(&maskedAccountInfo)
+
+	// assert
+	assert.Equal(t, expectedMask, maskedAccountInfo)
+}
+
 func Test_MaskSimple_WithArray_ReturnsCorrectResult(t *testing.T) {
 	// arrange
 	type UserPass struct {
 		Username string
-		Password string `mask:"simple,*"`
+		Password string `mask:"*"`
 	}
 	ups := []UserPass{
 		{
@@ -84,4 +84,164 @@ func Test_MaskSimple_WithArray_ReturnsCorrectResult(t *testing.T) {
 
 	// assert
 	assert.Equal(t, expectedMask, ups)
+}
+
+func Test_MaskSimple_WithShowBackAndAlphaNumeric_ReturnsCorrectResult(t *testing.T) {
+	// arrange
+	type CreditCard struct {
+		Number string `mask:"x,showback=4,alphanumeric"`
+	}
+	card := CreditCard{
+		Number: "1234-5678-9012-3456",
+	}
+	expectedNumber := "xxxx-xxxx-xxxx-3456"
+
+	// act
+	mask.Apply(&card)
+
+	// assert
+	assert.Equal(t, expectedNumber, card.Number)
+}
+
+func Test_MaskSimple_WithNestedStruct_ReturnsCorrectResult(t *testing.T) {
+	// arrange
+	type InnerInfo struct {
+		SecretAnswer string `mask:"X,alphanumeric"`
+	}
+	type User struct {
+		AccountNumber string `mask:"X"`
+		PublicInfo    string
+		Info          InnerInfo
+	}
+	user := User{
+		PublicInfo:    "user is cool",
+		AccountNumber: "12345",
+		Info: InnerInfo{
+			SecretAnswer: "the water is wet.",
+		},
+	}
+	expectedMask := User{
+		PublicInfo:    "user is cool",
+		AccountNumber: "XXXXX",
+		Info: InnerInfo{
+			SecretAnswer: "XXX XXXXX XX XXX.",
+		},
+	}
+
+	// act
+	mask.Apply(&user)
+
+	// assert
+	assert.Equal(t, expectedMask, user)
+}
+
+func Test_MaskSimple_WithNestedStructPointer_ReturnsCorrectResult(t *testing.T) {
+	// NOTE:
+	// arrange
+	type InnerInfo struct {
+		SecretAnswer string `mask:"X,alphanumeric"`
+	}
+	type User struct {
+		AccountNumber string `mask:"X"`
+		PublicInfo    string
+		Info          *InnerInfo
+	}
+	user := User{
+		PublicInfo:    "user is cool",
+		AccountNumber: "12345",
+		Info: &InnerInfo{
+			SecretAnswer: "the water is wet.",
+		},
+	}
+	expectedMask := User{
+		PublicInfo:    "user is cool",
+		AccountNumber: "XXXXX",
+		Info: &InnerInfo{
+			SecretAnswer: "XXX XXXXX XX XXX.",
+		},
+	}
+
+	// act
+	userMasked := user
+	mask.Apply(&userMasked)
+
+	// assert
+	assert.Equal(t, expectedMask, userMasked)
+
+	// NOTE: pointers do not get deep-copied in this case. Because the original user struct
+	// uses a pointer, it's the struct pointed to that gets modified. This may cause some
+	// unintended behavior if not careful.
+	assert.Equal(t, user.Info.SecretAnswer, "XXX XXXXX XX XXX.")
+}
+
+func Test_MaskSimple_WithStringAliasType_ReturnsCorrectResult(t *testing.T) {
+	// arrange
+	type Password string
+	type UserPass struct {
+		Username string
+		Password Password `mask:"*"`
+	}
+	up := UserPass{
+		Username: "John Smith",
+		Password: "abcd 1234",
+	}
+	expectedMask := UserPass{
+		Username: "John Smith",
+		Password: "*********",
+	}
+
+	// act
+	mask.Apply(&up)
+
+	// assert
+	assert.Equal(t, expectedMask, up)
+}
+
+func Test_Mask_OnNonPointer_ReturnsError(t *testing.T) {
+	// arrange
+	type S struct {
+		Secret string `mask:"X"`
+	}
+	type TestCase struct {
+		V    interface{}
+		Name string
+	}
+	testCases := []TestCase{
+		{
+			V:    "this is a string",
+			Name: "string",
+		},
+		{
+			V: S{
+				Secret: "this is a secret",
+			},
+			Name: "struct",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.Name, func(t *testing.T) {
+			// act
+			err := mask.Apply(tc.V)
+
+			// assert
+			assert.Error(t, err)
+		})
+	}
+}
+
+func Test_Mask_UnrecognizedMaskFunc_ReturnsError(t *testing.T) {
+	// arrange
+	type S struct {
+		Secret string `mask:"idk"`
+	}
+	s := S{
+		Secret: "this is a secret",
+	}
+
+	// act
+	err := mask.Apply(&s)
+
+	// assert
+	assert.Error(t, err)
 }
