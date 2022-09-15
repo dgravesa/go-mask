@@ -8,28 +8,23 @@ import (
 	"unicode"
 )
 
-func alnumToMaskCharMapper(maskChar rune) func(rune) rune {
-	return func(r rune) rune {
-		if unicode.IsLetter(r) || unicode.IsDigit(r) {
-			return maskChar
-		}
-		return r
-	}
+type simpleMasker struct {
+	MaskChar         rune
+	ShowFront        int
+	ShowBack         int
+	AlphanumericOnly bool
 }
 
-func allToMaskCharMapper(maskChar rune) func(rune) rune {
-	return func(_ rune) rune {
-		return maskChar
-	}
-}
-
-func buildSimpleMaskFunc(maskChar rune, args ...string) (maskFunc, error) {
+func newSimpleMaskerFromStructTag(tag string) (*simpleMasker, error) {
 	var err error
 	showFront := 0
 	showBack := 0
-	alnumOnly := false
+	alphanumericOnly := false
 
-	for _, arg := range args {
+	args := strings.Split(tag, ",")
+	maskChar := []rune(args[0])[0]
+
+	for _, arg := range args[1:] {
 		var argName, argVal string
 		argSplit := strings.SplitN(arg, "=", 2)
 		if len(argSplit) == 1 {
@@ -40,7 +35,7 @@ func buildSimpleMaskFunc(maskChar rune, args ...string) (maskFunc, error) {
 
 		switch argName {
 		case "alphanumeric":
-			alnumOnly = true
+			alphanumericOnly = true
 			if argVal != "" {
 				return nil, fmt.Errorf("alphanumeric specifier does not take an argument")
 			}
@@ -57,33 +52,43 @@ func buildSimpleMaskFunc(maskChar rune, args ...string) (maskFunc, error) {
 		}
 	}
 
-	return func(ptr reflect.Value) error {
-		val := ptr.Elem()
-		if val.Kind() != reflect.String {
-			return fmt.Errorf("mask only supports string types")
-		}
-
-		// construct masked string
-		maskedStr := maskStringSimple(val.String(), maskChar, showFront, showBack, alnumOnly)
-		newVal := reflect.ValueOf(maskedStr).Convert(val.Type())
-		val.Set(newVal)
-
-		return nil
+	return &simpleMasker{
+		MaskChar:         maskChar,
+		ShowFront:        showFront,
+		ShowBack:         showBack,
+		AlphanumericOnly: alphanumericOnly,
 	}, nil
 }
 
-func maskStringSimple(s string, maskChar rune, showFront, showBack int, alnumOnly bool) string {
-	if showFront+showBack >= len(s) {
+func (m simpleMasker) mask(ptr reflect.Value) error {
+	stringMaskFunc := makeStringMaskFunc(func(str string) (string, error) {
+		return m.maskString(str), nil
+	})
+	return stringMaskFunc(ptr)
+}
+
+func (m simpleMasker) maskString(s string) string {
+	if m.ShowFront+m.ShowBack >= len(s) {
 		return s
 	}
 
-	prefix := s[:showFront]
-	suffix := s[len(s)-showBack:]
-	midStr := s[showFront : len(s)-showBack]
-	if alnumOnly {
-		midStr = strings.Map(alnumToMaskCharMapper(maskChar), midStr)
+	prefix := s[:m.ShowFront]
+	suffix := s[len(s)-m.ShowBack:]
+	midStr := s[m.ShowFront : len(s)-m.ShowBack]
+
+	var charMasker func(rune) rune
+	if m.AlphanumericOnly {
+		charMasker = func(r rune) rune {
+			if unicode.IsLetter(r) || unicode.IsDigit(r) {
+				return m.MaskChar
+			}
+			return r
+		}
 	} else {
-		midStr = strings.Map(allToMaskCharMapper(maskChar), midStr)
+		charMasker = func(_ rune) rune {
+			return m.MaskChar
+		}
 	}
-	return prefix + midStr + suffix
+
+	return prefix + strings.Map(charMasker, midStr) + suffix
 }

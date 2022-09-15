@@ -14,7 +14,11 @@ func getMaskFunc(tag string) (maskFunc, error) {
 
 	if len(funcName) == 1 {
 		// special case, perform simple masking using the first character as the mask character
-		return buildSimpleMaskFunc([]rune(funcName)[0], args[1:]...)
+		simpleMasker, err := newSimpleMaskerFromStructTag(tag)
+		if err != nil {
+			return nil, err
+		}
+		return simpleMasker.mask, nil
 	}
 
 	// TODO: implement other maskers, including ability to create custom maskers
