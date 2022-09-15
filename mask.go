@@ -1,13 +1,8 @@
 package mask
 
 import (
-	"errors"
+	"fmt"
 	"reflect"
-)
-
-var (
-	ErrNotAPointer      = errors.New("mask: expects pointer argument")
-	ErrTypeNotSupported = errors.New("mask: type not supported")
 )
 
 // Func is used for masking a value.
@@ -17,7 +12,7 @@ type Func func(ptr reflect.Value) error
 func Apply(v interface{}) error {
 	ptr := reflect.ValueOf(v)
 	if ptr.Kind() != reflect.Pointer {
-		return ErrNotAPointer
+		return fmt.Errorf("mask: expected pointer argument")
 	}
 	return mask(ptr)
 }
@@ -64,10 +59,6 @@ func mask(ptr reflect.Value) error {
 				return err
 			}
 		}
-
-	case reflect.Map:
-		// TODO: support maps
-		return ErrTypeNotSupported
 	}
 
 	return nil
