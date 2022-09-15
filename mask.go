@@ -21,36 +21,30 @@ func mask(ptr reflect.Value) error {
 	case reflect.Struct:
 		t := val.Type()
 		for i := 0; i < t.NumField(); i++ {
-			maskFunc := mask // default to recursion
+			fieldPtr := getPointer(val.Field(i))
 
-			// apply masking if tag is specified
-			if maskTag := t.Field(i).Tag.Get("mask"); maskTag != "" {
-				var err error
-				maskFunc, err = getMaskFunc(maskTag)
+			if fieldMaskTag := t.Field(i).Tag.Get("mask"); fieldMaskTag != "" {
+				// apply masking if tag is specified
+				maskFieldFunc, err := getMaskFunc(fieldMaskTag)
+				if err != nil {
+					return err
+				}
+				err = maskFieldFunc(fieldPtr)
+				if err != nil {
+					return err
+				}
+			} else {
+				// perform masking recursively
+				err := mask(fieldPtr)
 				if err != nil {
 					return err
 				}
 			}
-
-			fieldPtr := val.Field(i)
-			if fieldPtr.Kind() != reflect.Pointer {
-				// if field is not a pointer, then use its address
-				fieldPtr = fieldPtr.Addr()
-			}
-
-			err := maskFunc(fieldPtr)
-			if err != nil {
-				return err
-			}
 		}
 
-	case reflect.Slice, reflect.Array:
+	case reflect.Slice:
 		for i := 0; i < val.Len(); i++ {
-			itemPtr := val.Index(i)
-			if itemPtr.Kind() != reflect.Pointer {
-				// if item is not a pointer, then use its address
-				itemPtr = itemPtr.Addr()
-			}
+			itemPtr := getPointer(val.Index(i))
 			err := mask(itemPtr)
 			if err != nil {
 				return err
@@ -59,4 +53,11 @@ func mask(ptr reflect.Value) error {
 	}
 
 	return nil
+}
+
+func getPointer(val reflect.Value) reflect.Value {
+	if val.Kind() == reflect.Pointer {
+		return val
+	}
+	return val.Addr()
 }
