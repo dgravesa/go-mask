@@ -20,17 +20,17 @@ var maskFuncBuilderRegistry = map[string]maskFuncBuilder{
 	"simple": simpleMaskFuncBuilder(),
 }
 
-func registerMaskFuncBuilder(funcName string, builder maskFuncBuilder) error {
-	if strings.Contains(funcName, ",") {
+func registerMaskFuncBuilder(name string, builder maskFuncBuilder) error {
+	if strings.Contains(name, ",") {
 		return fmt.Errorf("commas not permitted in mask func names")
 	}
 
-	_, found := maskFuncBuilderRegistry[funcName]
+	_, found := maskFuncBuilderRegistry[name]
 	if found {
-		return fmt.Errorf("mask func with name already exists: \"%s\"", funcName)
+		return fmt.Errorf("mask func with name already exists: \"%s\"", name)
 	}
 
-	maskFuncBuilderRegistry[funcName] = builder
+	maskFuncBuilderRegistry[name] = builder
 	return nil
 }
 
