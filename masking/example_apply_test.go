@@ -13,7 +13,7 @@ type UserAccount struct {
 	ActivationCode string `mask:"X,showfront=6,alphanumeric"`
 }
 
-func Example() {
+func ExampleApply() {
 	account := UserAccount{
 		Username:       "John Smith",
 		Password:       "thisisthepassword",
