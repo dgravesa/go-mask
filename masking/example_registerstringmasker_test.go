@@ -34,7 +34,7 @@ type Person struct {
 	Quote string `mask:"sponge"`
 }
 
-func ExampleRegisterStringMaster() {
+func ExampleRegisterStringMasker() {
 	person := Person{
 		Name:  "Dan",
 		Quote: "I have a really great idea.",

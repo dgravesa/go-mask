@@ -9,13 +9,13 @@ import (
 type StringMasker func(input string) (output string, err error)
 
 // RegisterStringMasker registers a new custom string masker that may be used in struct tags.
-func RegisterStringMasker(name string, stringMasker StringMasker) error {
-	masker := makeStringMaskFunc(stringMasker)
+func RegisterStringMasker(name string, masker StringMasker) error {
+	stringMaskFunc := makeStringMaskFunc(masker)
 	builder := func(args ...string) (maskFunc, error) {
 		if len(args) > 0 {
 			return nil, fmt.Errorf("mask func \"%s\" takes no additional arguments", name)
 		}
-		return masker, nil
+		return stringMaskFunc, nil
 	}
 	return registerMaskFuncBuilder(name, builder)
 }
@@ -25,7 +25,7 @@ func makeStringMaskFunc(masker StringMasker) maskFunc {
 		// get the current value
 		val := ptr.Elem()
 		if val.Kind() != reflect.String {
-			return fmt.Errorf("mask only supports string types")
+			return fmt.Errorf("mask func only supports string types")
 		}
 
 		// create the masked string
