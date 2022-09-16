@@ -67,7 +67,7 @@ func createStringMaskFuncBuilder(name string, masker func(*string, ...string) er
 			}
 
 			// mask the string in place
-			return masker(val.Interface().(*string))
+			return masker(ptr.Interface().(*string))
 		}, nil
 	}
 }

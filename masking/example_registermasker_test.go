@@ -8,7 +8,7 @@ import (
 	"github.com/dgravesa/go-mask/masking"
 )
 
-func SpongeCase(s string) (string, error) {
+func SpongeCase(s string) string {
 	var sb strings.Builder
 	uppercase := false
 	rs := []rune(s)
@@ -22,11 +22,11 @@ func SpongeCase(s string) (string, error) {
 			uppercase = !uppercase
 		}
 	}
-	return sb.String(), nil
+	return sb.String()
 }
 
 func init() {
-	masking.RegisterStringMasker("sponge", SpongeCase)
+	masking.RegisterMasker("sponge", SpongeCase)
 }
 
 type Person struct {
@@ -34,7 +34,7 @@ type Person struct {
 	Quote string `mask:"sponge"`
 }
 
-func ExampleRegisterStringMasker() {
+func ExampleRegisterMasker() {
 	person := Person{
 		Name:  "Dan",
 		Quote: "I have a really great idea.",
