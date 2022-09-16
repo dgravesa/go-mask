@@ -28,10 +28,10 @@ func maskInnerType(v interface{}) error {
 }
 
 func init() {
-	masking.RegisterStructMasker("custom", maskInnerType)
+	masking.RegisterMasker("custom", maskInnerType)
 }
 
-func ExampleRegisterStructMasker() {
+func ExampleRegisterMasker_struct() {
 	t1 := MyOuterType{
 		Name: "unmasked",
 		Inner: MyInnerType{

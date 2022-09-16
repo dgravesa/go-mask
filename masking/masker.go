@@ -49,26 +49,15 @@ func RegisterMasker[M Masker](name string, masker M) error {
 		})
 	case func(*string, ...string) error:
 		mfb = createStringMaskFuncBuilder(name, m)
+	case func(interface{}) error:
+		mfb = createStructMaskFuncBuilder(name, func(v interface{}, _ ...string) error {
+			return m(v)
+		})
+	case func(interface{}, ...string) error:
+		mfb = createStructMaskFuncBuilder(name, m)
 	default:
 		return fmt.Errorf("unsupported masker signature")
 	}
 
 	return registerMaskFuncBuilder(name, mfb)
-}
-
-func createStringMaskFuncBuilder(name string, masker func(*string, ...string) error) maskFuncBuilder {
-	return func(args ...string) (maskFunc, error) {
-		return func(ptr reflect.Value) error {
-			// get the current value
-			val := ptr.Elem()
-			if val.Kind() != reflect.String {
-				return fmt.Errorf("%s: mask func only supports string types", name)
-			}
-
-			// mask the string in place
-			var sptr *string // convert to *string to enable type aliases
-			sptr = ptr.Convert(reflect.TypeOf(sptr)).Interface().(*string)
-			return masker(sptr, args...)
-		}, nil
-	}
 }
