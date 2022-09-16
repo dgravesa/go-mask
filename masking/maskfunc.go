@@ -11,12 +11,12 @@ type maskFunc func(ptr reflect.Value) error
 type maskFuncBuilder func(args ...string) (maskFunc, error)
 
 var maskFuncBuilderRegistry = map[string]maskFuncBuilder{
-	"X":      simpleMaskFuncBuilderWithChar('X'),
-	"x":      simpleMaskFuncBuilderWithChar('x'),
-	"*":      simpleMaskFuncBuilderWithChar('*'),
-	"-":      simpleMaskFuncBuilderWithChar('-'),
-	"_":      simpleMaskFuncBuilderWithChar('_'),
-	".":      simpleMaskFuncBuilderWithChar('.'),
+	"X":      simpleMaskFuncBuilderWithRune('X'),
+	"x":      simpleMaskFuncBuilderWithRune('x'),
+	"*":      simpleMaskFuncBuilderWithRune('*'),
+	"-":      simpleMaskFuncBuilderWithRune('-'),
+	"_":      simpleMaskFuncBuilderWithRune('_'),
+	".":      simpleMaskFuncBuilderWithRune('.'),
 	"simple": simpleMaskFuncBuilder(),
 }
 

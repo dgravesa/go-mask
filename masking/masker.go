@@ -67,7 +67,9 @@ func createStringMaskFuncBuilder(name string, masker func(*string, ...string) er
 			}
 
 			// mask the string in place
-			return masker(ptr.Interface().(*string))
+			var sptr *string // convert to *string to enable type aliases
+			sptr = ptr.Convert(reflect.TypeOf(sptr)).Interface().(*string)
+			return masker(sptr, args...)
 		}, nil
 	}
 }
