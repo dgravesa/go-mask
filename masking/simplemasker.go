@@ -15,16 +15,36 @@ type simpleMasker struct {
 	AlphanumericOnly bool
 }
 
-func newSimpleMaskerFromStructTag(tag string) (*simpleMasker, error) {
-	var err error
-	showFront := 0
-	showBack := 0
-	alphanumericOnly := false
+func simpleMaskFuncBuilderWithChar(maskChar rune) maskFuncBuilder {
+	return func(args ...string) (maskFunc, error) {
+		masker := &simpleMasker{
+			MaskChar: maskChar,
+		}
+		if err := masker.updateFromArgs(args...); err != nil {
+			return nil, err
+		}
+		return masker.mask, nil
+	}
+}
 
-	args := strings.Split(tag, ",")
-	maskChar := []rune(args[0])[0]
+func simpleMaskFuncBuilder() maskFuncBuilder {
+	return func(args ...string) (maskFunc, error) {
+		if len(args) == 0 {
+			return simpleMaskFuncBuilderWithChar('*')()
+		}
 
-	for _, arg := range args[1:] {
+		// set mask character from first argument
+		if len(args[0]) != 1 {
+			return nil, fmt.Errorf("first argument to simple mask but be a single character")
+		}
+		maskChar := []rune(args[0])[0]
+		// build mask func with remaining arguments
+		return simpleMaskFuncBuilderWithChar(maskChar)(args[1:]...)
+	}
+}
+
+func (m *simpleMasker) updateFromArgs(args ...string) error {
+	for _, arg := range args {
 		var argName, argVal string
 		argSplit := strings.SplitN(arg, "=", 2)
 		if len(argSplit) == 1 {
@@ -33,43 +53,36 @@ func newSimpleMaskerFromStructTag(tag string) (*simpleMasker, error) {
 			argName, argVal = argSplit[0], argSplit[1]
 		}
 
+		var err error
 		switch argName {
 		case "alphanumeric":
-			alphanumericOnly = true
+			m.AlphanumericOnly = true
 			if argVal != "" {
-				return nil, fmt.Errorf("alphanumeric specifier does not take an argument")
+				return fmt.Errorf("alphanumeric specifier does not take an argument")
 			}
 		case "showfront":
-			showFront, err = strconv.Atoi(argVal)
+			m.ShowFront, err = strconv.Atoi(argVal)
 			if err != nil {
-				return nil, fmt.Errorf("unable to parse showfront value")
+				return fmt.Errorf("unable to parse showfront value")
 			}
 		case "showback":
-			showBack, err = strconv.Atoi(argVal)
+			m.ShowBack, err = strconv.Atoi(argVal)
 			if err != nil {
-				return nil, fmt.Errorf("unable to parse showback value")
+				return fmt.Errorf("unable to parse showback value")
 			}
 		}
 	}
 
-	return &simpleMasker{
-		MaskChar:         maskChar,
-		ShowFront:        showFront,
-		ShowBack:         showBack,
-		AlphanumericOnly: alphanumericOnly,
-	}, nil
+	return nil
 }
 
 func (m simpleMasker) mask(ptr reflect.Value) error {
-	stringMaskFunc := makeStringMaskFunc(func(str string) (string, error) {
-		return m.maskString(str), nil
-	})
-	return stringMaskFunc(ptr)
+	return makeStringMaskFunc(m.maskString)(ptr)
 }
 
-func (m simpleMasker) maskString(s string) string {
+func (m simpleMasker) maskString(s string) (string, error) {
 	if m.ShowFront+m.ShowBack >= len(s) {
-		return s
+		return s, nil
 	}
 
 	prefix := s[:m.ShowFront]
@@ -90,5 +103,5 @@ func (m simpleMasker) maskString(s string) string {
 		}
 	}
 
-	return prefix + strings.Map(charMasker, midStr) + suffix
+	return prefix + strings.Map(charMasker, midStr) + suffix, nil
 }
