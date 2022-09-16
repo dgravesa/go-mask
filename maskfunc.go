@@ -6,7 +6,25 @@ import (
 	"strings"
 )
 
+var maskFuncBuilderRegistry = map[string]maskFuncBuilder{}
+
 type maskFunc func(ptr reflect.Value) error
+
+type maskFuncBuilder func(args ...string) (maskFunc, error)
+
+func registerMaskFuncBuilder(funcName string, builder maskFuncBuilder) error {
+	if strings.Contains(funcName, ",") {
+		return fmt.Errorf("commas not permitted in mask func names")
+	}
+
+	_, found := maskFuncBuilderRegistry[funcName]
+	if found {
+		return fmt.Errorf("mask func with name already exists: \"%s\"", funcName)
+	}
+
+	maskFuncBuilderRegistry[funcName] = builder
+	return nil
+}
 
 func getMaskFunc(tag string) (maskFunc, error) {
 	args := strings.Split(tag, ",")
@@ -21,6 +39,10 @@ func getMaskFunc(tag string) (maskFunc, error) {
 		return simpleMasker.mask, nil
 	}
 
-	// TODO: implement other maskers, including ability to create custom maskers
-	return nil, fmt.Errorf("unrecognized mask func: \"%s\"", funcName)
+	builder, found := maskFuncBuilderRegistry[funcName]
+	if !found {
+		return nil, fmt.Errorf("unrecognized mask func: \"%s\"", funcName)
+	}
+
+	return builder(args[1:]...)
 }
