@@ -18,7 +18,6 @@ type Masker interface {
 
 // RegisterMasker registers a new masker function for use in struct tagging.
 func RegisterMasker[M Masker](name string, masker M) error {
-	// maskerType := reflect.TypeOf(masker)
 	var mfb maskFuncBuilder
 
 	switch m := reflect.ValueOf(masker).Interface().(type) {
