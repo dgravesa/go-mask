@@ -1,9 +1,9 @@
-package mask_test
+package masking_test
 
 import (
 	"testing"
 
-	"github.com/dgravesa/go-mask"
+	"github.com/dgravesa/go-mask/masking"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,7 +23,7 @@ func Test_MaskSimple_ReturnsCorrectResult(t *testing.T) {
 	}
 
 	// act
-	mask.Apply(&up)
+	masking.Apply(&up)
 
 	// assert
 	assert.Equal(t, expectedMask, up)
@@ -46,7 +46,7 @@ func Test_MaskSimple_WithShowFront_ReturnsCorrectResult(t *testing.T) {
 
 	// act
 	maskedAccountInfo := accountInfo
-	mask.Apply(&maskedAccountInfo)
+	masking.Apply(&maskedAccountInfo)
 
 	// assert
 	assert.Equal(t, expectedMask, maskedAccountInfo)
@@ -80,7 +80,7 @@ func Test_MaskSimple_WithArray_ReturnsCorrectResult(t *testing.T) {
 	}
 
 	// act
-	mask.Apply(&ups)
+	masking.Apply(&ups)
 
 	// assert
 	assert.Equal(t, expectedMask, ups)
@@ -97,7 +97,7 @@ func Test_MaskSimple_WithShowBackAndAlphaNumeric_ReturnsCorrectResult(t *testing
 	expectedNumber := "xxxx-xxxx-xxxx-3456"
 
 	// act
-	mask.Apply(&card)
+	masking.Apply(&card)
 
 	// assert
 	assert.Equal(t, expectedNumber, card.Number)
@@ -129,7 +129,7 @@ func Test_MaskSimple_WithNestedStruct_ReturnsCorrectResult(t *testing.T) {
 	}
 
 	// act
-	mask.Apply(&user)
+	masking.Apply(&user)
 
 	// assert
 	assert.Equal(t, expectedMask, user)
@@ -163,7 +163,7 @@ func Test_MaskSimple_WithNestedStructPointer_ReturnsCorrectResult(t *testing.T) 
 
 	// act
 	userMasked := user
-	mask.Apply(&userMasked)
+	masking.Apply(&userMasked)
 
 	// assert
 	assert.Equal(t, expectedMask, userMasked)
@@ -191,7 +191,7 @@ func Test_MaskSimple_WithStringAliasType_ReturnsCorrectResult(t *testing.T) {
 	}
 
 	// act
-	mask.Apply(&up)
+	masking.Apply(&up)
 
 	// assert
 	assert.Equal(t, expectedMask, up)
@@ -222,7 +222,7 @@ func Test_Mask_OnNonPointer_ReturnsError(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
 			// act
-			err := mask.Apply(tc.V)
+			err := masking.Apply(tc.V)
 
 			// assert
 			assert.Error(t, err)
@@ -240,7 +240,7 @@ func Test_Mask_UnrecognizedMaskFunc_ReturnsError(t *testing.T) {
 	}
 
 	// act
-	err := mask.Apply(&s)
+	err := masking.Apply(&s)
 
 	// assert
 	assert.Error(t, err)

@@ -1,11 +1,11 @@
-package mask_test
+package masking_test
 
 import (
 	"fmt"
 	"strings"
 	"unicode"
 
-	"github.com/dgravesa/go-mask"
+	"github.com/dgravesa/go-mask/masking"
 )
 
 func SpongeCase(s string) (string, error) {
@@ -26,7 +26,7 @@ func SpongeCase(s string) (string, error) {
 }
 
 func init() {
-	mask.RegisterStringMasker("sponge", SpongeCase)
+	masking.RegisterStringMasker("sponge", SpongeCase)
 }
 
 type Person struct {
@@ -40,7 +40,7 @@ func ExampleRegisterStringMaster() {
 		Quote: "I have a really great idea.",
 	}
 
-	err := mask.Apply(&person)
+	err := masking.Apply(&person)
 	if err != nil {
 		fmt.Println(err)
 	}

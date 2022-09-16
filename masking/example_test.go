@@ -1,9 +1,9 @@
-package mask_test
+package masking_test
 
 import (
 	"fmt"
 
-	"github.com/dgravesa/go-mask"
+	"github.com/dgravesa/go-mask/masking"
 )
 
 type UserAccount struct {
@@ -21,7 +21,7 @@ func Example() {
 		ActivationCode: "ab13ea-12cb55fab125-3f3b97",
 	}
 
-	mask.Apply(&account)
+	masking.Apply(&account)
 
 	fmt.Printf("%s, %s, %s, %s\n",
 		account.Username,
