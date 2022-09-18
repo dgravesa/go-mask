@@ -13,7 +13,7 @@ type MyInnerType struct {
 
 type MyOuterType struct {
 	Name  string
-	Inner MyInnerType `mask:"custom"`
+	Inner MyInnerType `mask:"xxx"`
 }
 
 func maskInnerType(v interface{}) error {
@@ -28,7 +28,7 @@ func maskInnerType(v interface{}) error {
 }
 
 func init() {
-	masking.RegisterMasker("custom", maskInnerType)
+	masking.RegisterMasker("xxx", maskInnerType)
 }
 
 func ExampleRegisterMasker_struct() {
