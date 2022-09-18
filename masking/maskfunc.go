@@ -8,7 +8,7 @@ import (
 
 type maskFunc func(ptr reflect.Value) error
 
-type maskFuncBuilder func(args ...string) (maskFunc, error)
+type maskFuncBuilder func(args ...string) maskFunc
 
 var maskFuncBuilderRegistry = map[string]maskFuncBuilder{
 	"X":      simpleMaskFuncBuilderWithRune('X'),
@@ -29,7 +29,7 @@ func getMaskFunc(tag string) (maskFunc, error) {
 		return nil, fmt.Errorf("unrecognized mask func: \"%s\"", funcName)
 	}
 
-	return builder(args[1:]...)
+	return builder(args[1:]...), nil
 }
 
 func registerMaskFuncBuilder(name string, builder maskFuncBuilder) error {
@@ -47,7 +47,7 @@ func registerMaskFuncBuilder(name string, builder maskFuncBuilder) error {
 }
 
 func createStringMaskFuncBuilder(name string, masker func(*string, ...string) error) maskFuncBuilder {
-	return func(args ...string) (maskFunc, error) {
+	return func(args ...string) maskFunc {
 		return func(ptr reflect.Value) error {
 			// get the current value
 			val := ptr.Elem()
@@ -59,14 +59,14 @@ func createStringMaskFuncBuilder(name string, masker func(*string, ...string) er
 			var sptr *string // convert to *string to enable type aliases
 			sptr = ptr.Convert(reflect.TypeOf(sptr)).Interface().(*string)
 			return masker(sptr, args...)
-		}, nil
+		}
 	}
 }
 
 func createStructMaskFuncBuilder(name string, masker func(interface{}, ...string) error) maskFuncBuilder {
-	return func(args ...string) (maskFunc, error) {
+	return func(args ...string) maskFunc {
 		return func(ptr reflect.Value) error {
 			return masker(ptr.Interface(), args...)
-		}, nil
+		}
 	}
 }
