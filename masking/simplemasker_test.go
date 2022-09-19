@@ -23,7 +23,7 @@ func Test_MaskSimple_ReturnsCorrectResult(t *testing.T) {
 	}
 
 	// act
-	masking.Apply(&up)
+	masking.Mask(&up)
 
 	// assert
 	assert.Equal(t, expectedMask, up)
@@ -46,7 +46,7 @@ func Test_MaskSimple_WithShowFront_ReturnsCorrectResult(t *testing.T) {
 
 	// act
 	maskedAccountInfo := accountInfo
-	masking.Apply(&maskedAccountInfo)
+	masking.Mask(&maskedAccountInfo)
 
 	// assert
 	assert.Equal(t, expectedMask, maskedAccountInfo)
@@ -80,7 +80,7 @@ func Test_MaskSimple_WithArray_ReturnsCorrectResult(t *testing.T) {
 	}
 
 	// act
-	masking.Apply(&ups)
+	masking.Mask(&ups)
 
 	// assert
 	assert.Equal(t, expectedMask, ups)
@@ -97,7 +97,7 @@ func Test_MaskSimple_WithShowBackAndAlphaNumeric_ReturnsCorrectResult(t *testing
 	expectedNumber := "xxxx-xxxx-xxxx-3456"
 
 	// act
-	masking.Apply(&card)
+	masking.Mask(&card)
 
 	// assert
 	assert.Equal(t, expectedNumber, card.Number)
@@ -129,7 +129,7 @@ func Test_MaskSimple_WithNestedStruct_ReturnsCorrectResult(t *testing.T) {
 	}
 
 	// act
-	masking.Apply(&user)
+	masking.Mask(&user)
 
 	// assert
 	assert.Equal(t, expectedMask, user)
@@ -163,7 +163,7 @@ func Test_MaskSimple_WithNestedStructPointer_ReturnsCorrectResult(t *testing.T) 
 
 	// act
 	userMasked := user
-	masking.Apply(&userMasked)
+	masking.Mask(&userMasked)
 
 	// assert
 	assert.Equal(t, expectedMask, userMasked)
@@ -191,7 +191,7 @@ func Test_MaskSimple_WithStringAliasType_ReturnsCorrectResult(t *testing.T) {
 	}
 
 	// act
-	masking.Apply(&up)
+	masking.Mask(&up)
 
 	// assert
 	assert.Equal(t, expectedMask, up)
@@ -208,7 +208,7 @@ func Test_MaskSimple_WithNonStandardChar_ReturnsCorrectResult(t *testing.T) {
 	expectedMask := "(###)-###-7890"
 
 	// act
-	masking.Apply(&ui)
+	masking.Mask(&ui)
 
 	// assert
 	assert.Equal(t, expectedMask, ui.PhoneNumber)

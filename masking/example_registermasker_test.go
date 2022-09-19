@@ -40,7 +40,7 @@ func ExampleRegisterMasker() {
 		Quote: "I have a really great idea.",
 	}
 
-	err := masking.Apply(&person)
+	err := masking.Mask(&person)
 	if err != nil {
 		fmt.Println(err)
 	}

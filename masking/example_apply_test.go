@@ -13,7 +13,7 @@ type UserAccount struct {
 	ActivationCode string `mask:"X,showfront=6,alphanumeric"`
 }
 
-func ExampleApply() {
+func ExampleMask() {
 	account := UserAccount{
 		Username:       "John Smith",
 		Password:       "thisisthepassword",
@@ -21,7 +21,7 @@ func ExampleApply() {
 		ActivationCode: "ab13ea-12cb55fab125-3f3b97",
 	}
 
-	masking.Apply(&account)
+	masking.Mask(&account)
 
 	fmt.Printf("%s, %s, %s, %s\n",
 		account.Username,

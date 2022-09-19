@@ -5,8 +5,8 @@ import (
 	"reflect"
 )
 
-// Apply applies masking based on struct tagging.
-func Apply(v interface{}) error {
+// Mask applies masking based on struct tagging.
+func Mask(v interface{}) error {
 	ptr := reflect.ValueOf(v)
 	if ptr.Kind() != reflect.Pointer {
 		return fmt.Errorf("mask: expected pointer argument")

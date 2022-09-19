@@ -32,7 +32,7 @@ func Test_Mask_OnNonPointer_ReturnsError(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
 			// act
-			err := masking.Apply(tc.V)
+			err := masking.Mask(tc.V)
 
 			// assert
 			assert.Error(t, err)
@@ -50,7 +50,7 @@ func Test_Mask_UnrecognizedMaskFunc_ReturnsError(t *testing.T) {
 	}
 
 	// act
-	err := masking.Apply(&s)
+	err := masking.Mask(&s)
 
 	// assert
 	assert.Error(t, err)

@@ -40,7 +40,7 @@ func ExampleRegisterMasker_struct() {
 		},
 	}
 
-	err := masking.Apply(&t1)
+	err := masking.Mask(&t1)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -55,7 +55,7 @@ func ExampleRegisterMasker_struct() {
 		},
 	}
 
-	err = masking.Apply(&t2)
+	err = masking.Mask(&t2)
 	if err != nil {
 		fmt.Println(err)
 	}
