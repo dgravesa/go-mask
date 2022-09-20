@@ -135,45 +135,6 @@ func Test_MaskSimple_WithNestedStruct_ReturnsCorrectResult(t *testing.T) {
 	assert.Equal(t, expectedMask, user)
 }
 
-func Test_MaskSimple_WithNestedStructPointer_ReturnsCorrectResult(t *testing.T) {
-	// NOTE:
-	// arrange
-	type InnerInfo struct {
-		SecretAnswer string `mask:"X,alphanumeric"`
-	}
-	type User struct {
-		AccountNumber string `mask:"X"`
-		PublicInfo    string
-		Info          *InnerInfo
-	}
-	user := User{
-		PublicInfo:    "user is cool",
-		AccountNumber: "12345",
-		Info: &InnerInfo{
-			SecretAnswer: "the water is wet.",
-		},
-	}
-	expectedMask := User{
-		PublicInfo:    "user is cool",
-		AccountNumber: "XXXXX",
-		Info: &InnerInfo{
-			SecretAnswer: "XXX XXXXX XX XXX.",
-		},
-	}
-
-	// act
-	userMasked := user
-	masking.Mask(&userMasked)
-
-	// assert
-	assert.Equal(t, expectedMask, userMasked)
-
-	// NOTE: pointers do not get deep-copied in this case. Because the original user struct
-	// uses a pointer, it's the struct pointed to that gets modified. This may cause some
-	// unintended behavior if not careful.
-	assert.Equal(t, user.Info.SecretAnswer, "XXX XXXXX XX XXX.")
-}
-
 func Test_MaskSimple_WithStringAliasType_ReturnsCorrectResult(t *testing.T) {
 	// arrange
 	type Password string
