@@ -13,7 +13,7 @@ type MyInnerType struct {
 
 type MyOuterType struct {
 	Name  string
-	Inner MyInnerType `mask:"custom"`
+	Inner MyInnerType `mask:"xxx"`
 }
 
 func maskInnerType(v interface{}) error {
@@ -28,10 +28,10 @@ func maskInnerType(v interface{}) error {
 }
 
 func init() {
-	masking.RegisterStructMasker("custom", maskInnerType)
+	masking.RegisterMasker("xxx", maskInnerType)
 }
 
-func ExampleRegisterStructMasker() {
+func ExampleRegisterMasker_struct() {
 	t1 := MyOuterType{
 		Name: "unmasked",
 		Inner: MyInnerType{
@@ -40,7 +40,7 @@ func ExampleRegisterStructMasker() {
 		},
 	}
 
-	err := masking.Apply(&t1)
+	err := masking.Mask(&t1)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -55,7 +55,7 @@ func ExampleRegisterStructMasker() {
 		},
 	}
 
-	err = masking.Apply(&t2)
+	err = masking.Mask(&t2)
 	if err != nil {
 		fmt.Println(err)
 	}

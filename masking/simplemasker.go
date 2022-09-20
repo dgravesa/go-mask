@@ -2,48 +2,43 @@ package masking
 
 import (
 	"fmt"
-	"reflect"
 	"strconv"
 	"strings"
 	"unicode"
 )
 
-type simpleMasker struct {
-	MaskChar         rune
-	ShowFront        int
-	ShowBack         int
-	AlphanumericOnly bool
-}
-
-func simpleMaskFuncBuilderWithChar(maskChar rune) maskFuncBuilder {
-	return func(args ...string) (maskFunc, error) {
-		masker := &simpleMasker{
-			MaskChar: maskChar,
-		}
-		if err := masker.updateFromArgs(args...); err != nil {
-			return nil, err
-		}
-		return masker.mask, nil
-	}
-}
-
 func simpleMaskFuncBuilder() maskFuncBuilder {
-	return func(args ...string) (maskFunc, error) {
-		if len(args) == 0 {
-			return simpleMaskFuncBuilderWithChar('*')()
+	return createStringMaskFuncBuilder("simple", func(s *string, args ...string) error {
+		if len(args) < 1 {
+			return simpleMaskerWithRune('X')(s)
 		}
 
-		// set mask character from first argument
-		if len(args[0]) != 1 {
-			return nil, fmt.Errorf("first argument to simple mask but be a single character")
+		// take first argument as mask character
+		runeArg := args[0]
+		if len(runeArg) != 1 {
+			return fmt.Errorf("first argument to simple mask must be a single character")
 		}
-		maskChar := []rune(args[0])[0]
-		// build mask func with remaining arguments
-		return simpleMaskFuncBuilderWithChar(maskChar)(args[1:]...)
+		maskChar := []rune(runeArg)[0]
+
+		return simpleMaskerWithRune(maskChar)(s, args[1:]...)
+	})
+}
+
+func simpleMaskFuncBuilderWithRune(maskChar rune) maskFuncBuilder {
+	return createStringMaskFuncBuilder(string(maskChar), simpleMaskerWithRune(maskChar))
+}
+
+func simpleMaskerWithRune(maskChar rune) func(s *string, args ...string) error {
+	return func(s *string, args ...string) error {
+		return maskSimpleWithArgs(s, maskChar, args...)
 	}
 }
 
-func (m *simpleMasker) updateFromArgs(args ...string) error {
+func maskSimpleWithArgs(s *string, maskChar rune, args ...string) error {
+	showFront := 0
+	showBack := 0
+	alnumOnly := false
+
 	for _, arg := range args {
 		var argName, argVal string
 		argSplit := strings.SplitN(arg, "=", 2)
@@ -56,52 +51,51 @@ func (m *simpleMasker) updateFromArgs(args ...string) error {
 		var err error
 		switch argName {
 		case "alphanumeric":
-			m.AlphanumericOnly = true
+			alnumOnly = true
 			if argVal != "" {
 				return fmt.Errorf("alphanumeric specifier does not take an argument")
 			}
 		case "showfront":
-			m.ShowFront, err = strconv.Atoi(argVal)
+			showFront, err = strconv.Atoi(argVal)
 			if err != nil {
 				return fmt.Errorf("unable to parse showfront value")
 			}
 		case "showback":
-			m.ShowBack, err = strconv.Atoi(argVal)
+			showBack, err = strconv.Atoi(argVal)
 			if err != nil {
 				return fmt.Errorf("unable to parse showback value")
 			}
 		}
 	}
 
+	maskSimple(s, maskChar, showFront, showBack, alnumOnly)
 	return nil
 }
 
-func (m simpleMasker) mask(ptr reflect.Value) error {
-	return makeStringMaskFunc(m.maskString)(ptr)
-}
-
-func (m simpleMasker) maskString(s string) (string, error) {
-	if m.ShowFront+m.ShowBack >= len(s) {
-		return s, nil
-	}
-
-	prefix := s[:m.ShowFront]
-	suffix := s[len(s)-m.ShowBack:]
-	midStr := s[m.ShowFront : len(s)-m.ShowBack]
-
+func maskSimple(s *string, maskChar rune, showFront, showBack int, alnumOnly bool) {
 	var charMasker func(rune) rune
-	if m.AlphanumericOnly {
+	if alnumOnly {
 		charMasker = func(r rune) rune {
 			if unicode.IsLetter(r) || unicode.IsDigit(r) {
-				return m.MaskChar
+				return maskChar
 			}
 			return r
 		}
 	} else {
 		charMasker = func(_ rune) rune {
-			return m.MaskChar
+			return maskChar
 		}
 	}
 
-	return prefix + strings.Map(charMasker, midStr) + suffix, nil
+	oldS := *s
+	lenS := len(oldS)
+
+	prefix := oldS[0:showFront]
+	suffix := oldS[lenS-showBack:]
+	midMasked := strings.Map(charMasker, oldS[showFront:lenS-showBack])
+
+	// construct new masked string
+	newS := prefix + midMasked + suffix
+
+	*s = newS
 }
