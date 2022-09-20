@@ -1,0 +1,12 @@
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: cimg/go:1.19.1
+
+    working_directory: /go/src/github.com/dgravesa/go-mask
+    steps:
+      - checkout
+
+      - run: go get -v -t -d ./...
+      - run: go test -v ./...
