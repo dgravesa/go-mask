@@ -4,7 +4,6 @@ jobs:
     docker:
       - image: cimg/go:1.19.1
 
-    working_directory: /go/src/github.com/dgravesa/go-mask
     steps:
       - checkout
 
