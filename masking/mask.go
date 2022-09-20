@@ -26,8 +26,9 @@ func mask(ptr reflect.Value, maskPointedVals bool) error {
 	}
 
 	val := ptr.Elem()
+	valKind := val.Kind()
 
-	switch val.Kind() {
+	switch valKind {
 	case reflect.Struct:
 		t := val.Type()
 		for i := 0; i < t.NumField(); i++ {
@@ -55,8 +56,8 @@ func mask(ptr reflect.Value, maskPointedVals bool) error {
 			}
 		}
 
-	case reflect.Slice:
-		if maskPointedVals {
+	case reflect.Slice, reflect.Array:
+		if maskPointedVals || valKind == reflect.Array {
 			for i := 0; i < val.Len(); i++ {
 				itemPtr, isValPointer := getPointer(val.Index(i))
 				if isValPointer && !maskPointedVals {

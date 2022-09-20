@@ -42,6 +42,84 @@ func Test_Mask_OnStructWithSlice_DoesNotMaskSliceItems(t *testing.T) {
 	}, slice)
 }
 
+func Test_Mask_OnStructWithArray_MasksArrayItems(t *testing.T) {
+	// arrange
+	type InnerS struct {
+		Secret string `mask:"X"`
+	}
+	type OuterS struct {
+		Array [2]InnerS
+	}
+	array := [2]InnerS{
+		{
+			Secret: "Hello, World!",
+		},
+		{
+			Secret: "This is a secret string",
+		},
+	}
+	s := OuterS{
+		Array: array,
+	}
+
+	// act
+	err := masking.Mask(&s)
+
+	// assert
+	assert.NoError(t, err)
+	assert.Equal(t, [2]InnerS{
+		{
+			Secret: "XXXXXXXXXXXXX",
+		},
+		{
+			Secret: "XXXXXXXXXXXXXXXXXXXXXXX",
+		},
+	}, s.Array)
+	assert.Equal(t, [2]InnerS{
+		{
+			Secret: "Hello, World!",
+		},
+		{
+			Secret: "This is a secret string",
+		},
+	}, array)
+}
+
+func Test_Mask_OnStructWithArrayOfPointers_DoesNotMaskArrayItems(t *testing.T) {
+	// arrange
+	type InnerS struct {
+		Secret string `mask:"X"`
+	}
+	type OuterS struct {
+		Array [2]*InnerS
+	}
+	array := [2]*InnerS{
+		{
+			Secret: "Hello, World!",
+		},
+		{
+			Secret: "These should not be masked",
+		},
+	}
+	s := OuterS{
+		Array: array,
+	}
+
+	// act
+	err := masking.Mask(&s)
+
+	// assert
+	assert.NoError(t, err)
+	assert.Equal(t, [2]*InnerS{
+		{
+			Secret: "Hello, World!",
+		},
+		{
+			Secret: "These should not be masked",
+		},
+	}, array)
+}
+
 func Test_Mask_OnStructWithNestedStruct_MasksNestedStruct(t *testing.T) {
 	// arrange
 	type InnerS struct {
@@ -93,6 +171,35 @@ func Test_Mask_OnStructWithPointedField_DoesNotMaskPointedField(t *testing.T) {
 	}, pointed)
 }
 
+func Test_Mask_OnSlice_DoesNotMaskValues(t *testing.T) {
+	// arrange
+	type InnerS struct {
+		Secret string `mask:"X"`
+	}
+	s := []InnerS{
+		{
+			Secret: "This is a secret string",
+		},
+		{
+			Secret: "This is another secret string",
+		},
+	}
+
+	// act
+	err := masking.Mask(&s)
+
+	// assert
+	assert.NoError(t, err)
+	assert.Equal(t, []InnerS{
+		{
+			Secret: "This is a secret string",
+		},
+		{
+			Secret: "This is another secret string",
+		},
+	}, s)
+}
+
 func Test_DeepMask_OnStructWithSlice_MasksSliceItems(t *testing.T) {
 	// arrange
 	type InnerS struct {
@@ -107,7 +214,7 @@ func Test_DeepMask_OnStructWithSlice_MasksSliceItems(t *testing.T) {
 				Secret: "Hello, World!",
 			},
 			{
-				Secret: "These should not be masked",
+				Secret: "These should be masked",
 			},
 		},
 	}
@@ -123,10 +230,88 @@ func Test_DeepMask_OnStructWithSlice_MasksSliceItems(t *testing.T) {
 				Secret: "XXXXXXXXXXXXX",
 			},
 			{
-				Secret: "XXXXXXXXXXXXXXXXXXXXXXXXXX",
+				Secret: "XXXXXXXXXXXXXXXXXXXXXX",
 			},
 		},
 	}, s)
+}
+
+func Test_DeepMask_OnStructWithArray_MasksArrayItems(t *testing.T) {
+	// arrange
+	type InnerS struct {
+		Secret string `mask:"X"`
+	}
+	type OuterS struct {
+		Array [2]InnerS
+	}
+	array := [2]InnerS{
+		{
+			Secret: "Hello, World!",
+		},
+		{
+			Secret: "This is a secret string",
+		},
+	}
+	s := OuterS{
+		Array: array,
+	}
+
+	// act
+	err := masking.DeepMask(&s)
+
+	// assert
+	assert.NoError(t, err)
+	assert.Equal(t, [2]InnerS{
+		{
+			Secret: "XXXXXXXXXXXXX",
+		},
+		{
+			Secret: "XXXXXXXXXXXXXXXXXXXXXXX",
+		},
+	}, s.Array)
+	assert.Equal(t, [2]InnerS{
+		{
+			Secret: "Hello, World!",
+		},
+		{
+			Secret: "This is a secret string",
+		},
+	}, array)
+}
+
+func Test_DeepMask_OnStructWithArrayOfPointers_MasksArrayItems(t *testing.T) {
+	// arrange
+	type InnerS struct {
+		Secret string `mask:"X"`
+	}
+	type OuterS struct {
+		Array [2]*InnerS
+	}
+	array := [2]*InnerS{
+		{
+			Secret: "Hello, World!",
+		},
+		{
+			Secret: "These should be masked",
+		},
+	}
+	s := OuterS{
+		Array: array,
+	}
+
+	// act
+	err := masking.DeepMask(&s)
+
+	// assert
+	assert.NoError(t, err)
+	assert.Equal(t, [2]*InnerS{
+		{
+			Secret: "XXXXXXXXXXXXX",
+		},
+		{
+			Secret: "XXXXXXXXXXXXXXXXXXXXXX",
+		},
+	}, array)
 }
 
 func Test_DeepMask_OnStructWithNestedStruct_MasksNestedStruct(t *testing.T) {
@@ -177,6 +362,35 @@ func Test_DeepMask_OnStructWithPointedField_MasksPointedField(t *testing.T) {
 	assert.Equal(t, &InnerS{
 		Secret: "XXXXXXXXXXXXXXXXXXXXX",
 	}, s.Pointed)
+}
+
+func Test_DeepMask_OnSlice_MasksValues(t *testing.T) {
+	// arrange
+	type InnerS struct {
+		Secret string `mask:"X"`
+	}
+	s := []InnerS{
+		{
+			Secret: "This is a secret string",
+		},
+		{
+			Secret: "This is another secret string",
+		},
+	}
+
+	// act
+	err := masking.DeepMask(&s)
+
+	// assert
+	assert.NoError(t, err)
+	assert.Equal(t, []InnerS{
+		{
+			Secret: "XXXXXXXXXXXXXXXXXXXXXXX",
+		},
+		{
+			Secret: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+		},
+	}, s)
 }
 
 func Test_Mask_OnNonPointer_ReturnsError(t *testing.T) {

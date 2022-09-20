@@ -52,40 +52,6 @@ func Test_MaskSimple_WithShowFront_ReturnsCorrectResult(t *testing.T) {
 	assert.Equal(t, expectedMask, maskedAccountInfo)
 }
 
-func Test_MaskSimple_WithArray_ReturnsCorrectResult(t *testing.T) {
-	// arrange
-	type UserPass struct {
-		Username string
-		Password string `mask:"*"`
-	}
-	ups := []UserPass{
-		{
-			Username: "John Smith",
-			Password: "abcd 1234",
-		},
-		{
-			Username: "Jim Brown",
-			Password: "verylongpassword123",
-		},
-	}
-	expectedMask := []UserPass{
-		{
-			Username: "John Smith",
-			Password: "*********",
-		},
-		{
-			Username: "Jim Brown",
-			Password: "*******************",
-		},
-	}
-
-	// act
-	masking.Mask(&ups)
-
-	// assert
-	assert.Equal(t, expectedMask, ups)
-}
-
 func Test_MaskSimple_WithShowBackAndAlphaNumeric_ReturnsCorrectResult(t *testing.T) {
 	// arrange
 	type CreditCard struct {
